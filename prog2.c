@@ -6,7 +6,7 @@
 int
 main(int argc, char **argv)
 {
-    struct simplex_shmbuf *sshmbuf = sshmbuf_lookup(SHM_NAME);
+    struct char_sshmbuf *sshmbuf = char_sshmbuf_lookup(SHM_NAME);
     if (sshmbuf == NULL) {
         return -EIO;
     }

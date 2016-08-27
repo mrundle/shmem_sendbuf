@@ -5,7 +5,7 @@
 
 int main(void)
 {
-    struct simplex_shmbuf *sshmbuf = sshmbuf_create(SHM_NAME);
+    struct char_sshmbuf *sshmbuf = char_sshmbuf_create(SHM_NAME);
     if (sshmbuf == NULL) {
         return -EIO;
     }

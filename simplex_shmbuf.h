@@ -14,57 +14,38 @@
 
 #define SHM_NAME "/testing"
 
-#define BUFSZ 128 
-
 /*
  * simplex (adj.): allowing communication in only one direction at a time 
  *
  * assumptions: one reader, one writer, one direction of communication
  */
-struct simplex_shmbuf {
-    char buf[BUFSZ];
 
-    /* a simple 'switch' that is flipped back and forth to indicate that the
-     * data in the buffer is ready to be consumed by the reader 
-     */
-    volatile bool ready;
-    size_t ready_len;
-};
-
-struct simplex_shmbuf *
-sshmbuf_create(const char *const shm_name)
+static void *
+shm_create(const char *const shm_name, size_t size)
 {
-    shm_unlink(SHM_NAME); /* unlink if exists */
+    shm_unlink(shm_name); /* unlink if exists */
 
-    int fd = shm_open(SHM_NAME, O_CREAT | O_EXCL | O_RDWR, S_IRUSR | S_IWUSR);
+    int fd = shm_open(shm_name, O_CREAT | O_EXCL | O_RDWR, S_IRUSR | S_IWUSR);
     if (fd == -1) {
         perror(__func__);
         return NULL;
     }
 
-    if (ftruncate(fd, sizeof(struct simplex_shmbuf)) < 0) {
+    if (ftruncate(fd, size) < 0) {
         perror(__func__);
         return NULL;
     }
-    void *ptr = mmap(NULL,
-                     sizeof(struct simplex_shmbuf),
-                     PROT_READ | PROT_WRITE,
-                     MAP_SHARED,
-                     fd,
-                     0);
+    void *ptr = mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
     if (ptr == MAP_FAILED) {
         perror(__func__);
         return NULL;
     }
 
-    /* note that 'ready' is initialized to false */
-    memset(ptr, 0, sizeof(struct simplex_shmbuf));
-
-    return ptr; 
+    return ptr;
 }
 
-struct simplex_shmbuf *
-sshmbuf_lookup(const char *const shm_name)
+static void *
+shm_lookup(const char *const shm_name, size_t size)
 {
     int fd = shm_open(SHM_NAME, O_RDWR, 0);
     if (fd == -1) {
@@ -72,12 +53,7 @@ sshmbuf_lookup(const char *const shm_name)
         return NULL;
     }
 
-    void *ptr = mmap(NULL,
-                     sizeof(struct simplex_shmbuf),
-                     PROT_READ | PROT_WRITE,
-                     MAP_SHARED,
-                     fd,
-                     0);
+    void *ptr = mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
 
     if (ptr == MAP_FAILED) {
         perror(__func__);
@@ -86,5 +62,30 @@ sshmbuf_lookup(const char *const shm_name)
 
     return ptr;
 }
+
+#define SSHMBUF_DEFINE(name, elt_type, n_elt)                                  \
+struct name {                                                                  \
+    elt_type buf[n_elt * sizeof(elt_type)];                                    \
+    volatile bool ready;                                                       \
+    size_t ready_len;                                                          \
+};                                                                             \
+                                                                               \
+struct name *                                                                  \
+name ## _create(const char *const shm_name)                                    \
+{                                                                              \
+    void *ptr = shm_create(shm_name, sizeof(struct name));                     \
+    if (ptr) {                                                                 \
+        memset(ptr, 0, sizeof(struct name));                                   \
+    }                                                                          \
+    return ptr;                                                                \
+}                                                                              \
+                                                                               \
+struct name *                                                                  \
+name ## _lookup(const char *const shm_name)                                    \
+{                                                                              \
+    return shm_lookup(shm_name, sizeof(struct name));                          \
+}
+
+SSHMBUF_DEFINE(char_sshmbuf, char, 128)
 
 #endif // SIMPLEX_SHMBUF_H
