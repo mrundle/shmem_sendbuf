@@ -1,21 +1,25 @@
-#include "simplex_shmbuf.h"
+#include "prog_common.h"
 
 #include <stdio.h>
 #include <unistd.h>
 
 int main(void)
 {
-    struct char_sshmbuf *sshmbuf = char_sshmbuf_create(SHM_NAME);
-    if (sshmbuf == NULL) {
+    struct char_shmem_sendbuf *shmbuf =
+        shmbuf_create(EXAMPLE_SHM_NAME, sizeof(*shmbuf));
+
+    if (shmbuf == NULL) {
         return -EIO;
     }
 
+    memset(shmbuf, 0, sizeof(*shmbuf));
+
     while (true) {
-        while (sshmbuf->ready == false) {
+        while (shmbuf->ready == false) {
             usleep(100);
         }
-        write(STDOUT_FILENO, &sshmbuf->buf, sshmbuf->ready_len);
-        sshmbuf->ready = false;
+        write(STDOUT_FILENO, &shmbuf->buf, shmbuf->ready_len);
+        shmbuf->ready = false;
     } 
 
     // TODO catch kill signal and unlink the shm

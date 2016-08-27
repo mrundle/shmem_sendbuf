@@ -1,4 +1,4 @@
-#include "simplex_shmbuf.h"
+#include "prog_common.h"
 
 #include <stdio.h>
 #include <unistd.h>
@@ -6,24 +6,25 @@
 int
 main(int argc, char **argv)
 {
-    struct char_sshmbuf *sshmbuf = char_sshmbuf_lookup(SHM_NAME);
-    if (sshmbuf == NULL) {
+    struct char_shmem_sendbuf *shmbuf =
+        shmbuf_lookup(EXAMPLE_SHM_NAME, sizeof(*shmbuf));
+    if (shmbuf == NULL) {
         return -EIO;
     }
 
     /* write STDIN to the other process */
     ssize_t nread;
     while ((nread = read(STDIN_FILENO,
-                         &sshmbuf->buf,
-                         sizeof(sshmbuf->buf))) > 0) {
-        sshmbuf->ready_len = nread;
-        sshmbuf->ready = true;
-        while (sshmbuf->ready == true) {
+                         &shmbuf->buf,
+                         sizeof(shmbuf->buf))) > 0) {
+        shmbuf->ready_len = nread;
+        shmbuf->ready = true;
+        while (shmbuf->ready == true) {
             usleep(100);
         }
     }
-    sshmbuf->ready_len = 0;
-    sshmbuf->ready = (nread == 0);
+    shmbuf->ready_len = 0;
+    shmbuf->ready = (nread == 0);
 
     return 0;
 }
