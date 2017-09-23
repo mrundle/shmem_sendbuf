@@ -21,3 +21,16 @@ To build and run an example:
 <code>
 make run
 </code>
+
+Another example:
+<code>
+mrundle 14:20 ~/shmem_sendbuf
+$ ./prog1 &
+[1] 7175
+mrundle 14:20 ~/shmem_sendbuf
+$ ./prog2 <<< "this text will be transferred from prog2 to prog1 via shared memory!"
+this text will be transferred from prog2 to prog1 via shared memory!
+mrundle 14:20 ~/shmem_sendbuf
+$ kill %1
+[1]+  Terminated              ./prog1
+</code>
