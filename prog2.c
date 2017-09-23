@@ -1,3 +1,8 @@
+/*
+ * This program looks up a shared memory zone, and writes the
+ * contents of STDIN to it in chunks. This will be picked up
+ * by prog1 and written to that programs STDOUT.
+ */
 #include "prog_common.h"
 
 #include <stdio.h>

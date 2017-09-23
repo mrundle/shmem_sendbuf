@@ -1,3 +1,7 @@
+/*
+ * This program creates a shared memory zone, and then watches
+ * it, printing out anything that it finds there.
+ */
 #include "prog_common.h"
 
 #include <stdio.h>
